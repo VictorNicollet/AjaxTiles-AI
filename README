@@ -1,0 +1,101 @@
+Ajax Tiles is an online video game played by two artificial intelligences on a board
+of 24x12 square tiles. Each player attempts to conquer as many tiles as possible,
+which may involve capturing tiles owned by the other player or permanently 
+disabling tiles to avoid being attacked in return. The game ends when no neutral tiles
+remain.
+
+You may see an example here: http://tiles.nicollet.net/
+
+The game is written entirely in JavaScript. An AI is merely an URL that the game will
+query to ask for the next move. The request contains a complete description of the
+game board as an array of arrays, and the response is expected to be an object of
+the form {x:1,y:5} indicating the coordinates of the tile to click.
+
+Rules of the game
+=================
+
+Every tile is represented by a string. These are :
+
+ '' (empty string) : an empty tile.
+ 'b' : a tile owned by the blue player.
+ 'r' : a tile owner by the red player.
+ 'd' : a contaminated tile.
+ 'n' : a nuked tile.
+
+Clicking on an empty tile paints it with your color. Clicking on a tile you own will
+nuke it (the four adjacent tiles will be contaminated when this happens). Clicking on
+any other tile simply passes your turn.
+
+The game board starts with several nuked tiles (and the surrounding contaminated
+tiles) in order to make things more fun.
+
+When a red and blue tile are placed next to each other (along the edges, not 
+along the corners), a battle happens. The game counts how many friendly tiles are
+connected to each battling tile (again, connected along the edges). The tile
+with the least friends becomes empty. 
+
+  So, a tile connected to 18 friends loses against a tile connected to 35 friends.
+
+If a tie happens, the attacking tile is removed.
+
+If simultaneous battles happen, either the attacking tile defeats all defending
+tiles (on their own), or it is defeated. 
+
+  So, a tile connected to 5 friends wins against two tiles each connected to 
+  4 friends, but loses against two tiles connected to 4 and 6 friends respectively.
+
+Strategies 
+==========
+
+Keeping a single blob of connected tiles means that you will win every battle
+you will be involved in. On the other hand, your opponent can use nukes to
+isolate your blob in a small corner, and proceed to conquer the rest of the board
+by itself. So, winning the game involves keeping a balance between being
+stronger than your opponent and cornering your opponent.
+
+The AI
+======
+
+When the game needs to know the next move for a player, it sends an HTTP POST
+request to the URL of that player's AI. It has two arguments:
+
+  color (r or b) : the color of the player controlled by the AI
+  board (JSON array-of-arrays-of-strings) : the board tiles as board[x][y]
+
+So, $color === $board[3][0] is true if the player controls the tile in the
+fourth column, first row.
+
+The AI is allowed to do ANYTHING to provide a response within a 30s limit
+(failure to do so results in an immediate loss). 
+
+The response should be served as the application/json content-type, and should
+be a string of the form {"x":3,"y":0} (that is, a properly encoded JSON
+representation of an x,y integer pair). The game will click the corresponding
+tile on the board, then ask the other player for its move.
+
+The example AI that plays on the default page is defined in the index.php
+file in this repository. Check it out (or fork it).
+
+Testing your AI
+===============
+
+Upload it to a server, then connect to http://tiles.nicollet.net/ and paste
+the URL in one of the two "AI Url" boxes. Then, click "New Game"
+
+Alternatively, you may manually set the first or second AI Url boxes through
+the game URL: 
+
+  http://tiles.nicollet.net/?p1=FOO&p2=BAR
+
+This sets the red URL to "FOO" and the blue URL to "BAR".
+
+Sharing your AI
+===============
+
+Mention it in a fork on github, or send me a tweet (@victorNicollet)
+along with the name and author name you would like to see mentioned
+(I can include a link to your site, blog, repository or profile if you
+provide one).
+
+I will then add it to the game page.
+
